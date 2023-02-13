@@ -1,0 +1,66 @@
+package internal
+
+import (
+	"fmt"
+)
+
+// AzureTFState Azure storage account state backend configuration.
+type AzureTFState struct {
+	ResourceGroup  string `mapstructure:"resource_group"`
+	StorageAccount string `mapstructure:"storage_account"`
+	ContainerName  string `mapstructure:"container_name"`
+	StateFolder    string `mapstructure:"state_folder"`
+}
+
+func (a AzureTFState) Key(site string) string {
+	if a.StateFolder == "" {
+		return site
+	}
+	return fmt.Sprintf("%s/%s", a.StateFolder, site)
+}
+
+type GlobalConfig struct {
+	TenantID       string            `mapstructure:"tenant_id"`
+	SubscriptionID string            `mapstructure:"subscription_id"`
+	ResourcePrefix string            `mapstructure:"resource_prefix"`
+	ResourceTags   map[string]string `mapstructure:"resource_tags"`
+}
+
+// SiteAzureSettings Site-specific Azure settings
+type SiteConfig struct {
+	ResourceGroup  string `mapstructure:"resource_group"`
+	ResourcePrefix string `mapstructure:"resource_prefix"`
+	SubscriptionID string `mapstructure:"subscription_id"`
+
+	Components map[string]SiteComponentConfig
+}
+
+func (a *SiteConfig) merge(c *GlobalConfig) {
+	if a.ResourcePrefix == "" {
+		a.ResourcePrefix = c.ResourcePrefix
+	}
+	if a.SubscriptionID == "" {
+		a.SubscriptionID = c.SubscriptionID
+	}
+}
+
+type ComponentConfig struct {
+	Endpoints map[string]string `mapstructure:"-"`
+
+	Name        string `mapstructure:"-"`
+	ServicePlan string `mapstructure:"service_plan"`
+	ShortName   string `mapstructure:"short_name"`
+}
+
+type SiteComponentConfig struct {
+	ServicePlan string `mapstructure:"service_plan"`
+
+	Name      string           `mapstructure:"-"`
+	Component *ComponentConfig `mapstructure:"-"`
+}
+
+type SiteComponent struct {
+	InternalName string
+	ExternalName string
+	Component    *ComponentConfig
+}

@@ -1,0 +1,22 @@
+{
+    "type": "object",
+    "description": "Azure configuration.",
+    "required": [
+        "subscription_id"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "subscription_id": {
+            "type": "string"
+        },
+        "tenant_id": {
+            "type": "string"
+        },
+        "resource_prefix": {
+            "type": "string"
+        },
+        "resource_tags": {
+            "type": "object"
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "type": "object",
+    "description": "Site-specific Azure settings.",
+    "additionalProperties": false,
+    "properties": {
+        "resource_group": {
+            "type": "string"
+        },
+        "subscription_id": {
+            "type": "string"
+        },
+        "resource_prefix": {
+            "type": "string"
+        }
+    }
+}
