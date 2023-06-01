@@ -6,7 +6,6 @@ An unopinionated plugin for Azure
 ## Usage
 
 ```yaml
----
 mach_composer:
   version: 1
   plugins:
@@ -36,5 +35,4 @@ sites:
     azure:
       resource_group: my-rg #resource group in which the site is deployed, usually one per site
       resource_prefix: my-resource-prefix #prefix used for created resources in this group
-      
 ```
