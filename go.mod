@@ -3,7 +3,7 @@ module github.com/mach-composer/mach-composer-plugin-azure-minimal
 go 1.21
 
 require (
-	github.com/creasty/defaults v1.7.0
+	github.com/creasty/defaults v1.8.0
 	github.com/flosch/pongo2/v5 v5.0.0
 	github.com/mach-composer/mach-composer-plugin-helpers v0.0.4
 	github.com/mach-composer/mach-composer-plugin-sdk v1.0.0
