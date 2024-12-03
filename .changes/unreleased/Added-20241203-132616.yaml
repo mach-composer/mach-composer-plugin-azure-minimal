@@ -1,0 +1,4 @@
+kind: Added
+body: Deprecated resource_tags field and auto infer based on environment like the
+  other cloud plugins
+time: 2024-12-03T13:26:16.040495216+01:00

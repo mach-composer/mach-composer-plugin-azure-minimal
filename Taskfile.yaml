@@ -5,7 +5,7 @@ tasks:
     cmd: golangci-lint run
 
   build:
-    cmd: goreleaser build --snapshot --single-target --rm-dist
+    cmd: goreleaser build --snapshot --single-target --clean
 
   test:
     cmd: go test -race ./...
