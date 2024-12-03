@@ -2,8 +2,8 @@ package internal
 
 import (
 	"fmt"
-
 	"github.com/creasty/defaults"
+	"github.com/hashicorp/go-hclog"
 	"github.com/mach-composer/mach-composer-plugin-helpers/helpers"
 	"github.com/mach-composer/mach-composer-plugin-sdk/plugin"
 	"github.com/mach-composer/mach-composer-plugin-sdk/schema"
@@ -83,6 +83,13 @@ func (p *Plugin) SetGlobalConfig(data map[string]any) error {
 	if err := mapstructure.Decode(data, &p.globalConfig); err != nil {
 		return err
 	}
+
+	if p.globalConfig.ResourceTags != nil {
+		hclog.Default().Warn(
+			fmt.Sprintf("Using resource tags is deprecated. These should be inferred from the site configuration. The field will be removed in a future release."),
+		)
+	}
+
 	return nil
 }
 
@@ -185,12 +192,22 @@ func (p *Plugin) TerraformRenderResources(site string) (string, error) {
 		return "", nil
 	}
 
+	var tags = map[string]string{
+		"SiteName":    site,
+		"Environment": p.environment,
+	}
+	if p.globalConfig.ResourceTags != nil {
+		for k, v := range p.globalConfig.ResourceTags {
+			tags[k] = v
+		}
+	}
+
 	templateContext := struct {
 		SubscriptionID string
 		Tags           map[string]string
 	}{
 		SubscriptionID: cfg.SubscriptionID,
-		Tags:           p.globalConfig.ResourceTags,
+		Tags:           tags,
 	}
 
 	template := `
@@ -259,7 +276,7 @@ func (p *Plugin) getComponentConfig(name string) *ComponentConfig {
 	return &componentConfig
 }
 
-func terraformRenderComponentVars(cfg *SiteConfig, componentCfg *SiteComponentConfig) (string, error) {
+func terraformRenderComponentVars(cfg *SiteConfig, _ *SiteComponentConfig) (string, error) {
 	templateContext := struct {
 		Config *SiteConfig
 	}{
