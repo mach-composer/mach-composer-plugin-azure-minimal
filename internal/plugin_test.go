@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestPlugin_RenderTerraformComponent(t *testing.T) {
+func TestPlugin_RenderTerraformComponent_OK(t *testing.T) {
 	var component = &ComponentConfig{
 		ServicePlan: "plan",
 	}
@@ -35,4 +35,30 @@ func TestPlugin_RenderTerraformComponent(t *testing.T) {
 	assert.NotNil(t, s)
 	assert.Equal(t, []string{"azurerm = azurerm"}, s.Providers)
 	assert.Equal(t, "\n\tazure = {\n\t\tresource_group_name = \"name\"\n\t\tresource_prefix = \"prefix\"\n\t}\n\t", s.Variables)
+}
+
+func TestPlugin_RenderTerraformComponent_NoVariables(t *testing.T) {
+	var component = &ComponentConfig{
+		ServicePlan: "plan",
+	}
+
+	p := &Plugin{
+		globalConfig: &GlobalConfig{
+			SubscriptionID: "subscription",
+		},
+		siteConfigs: map[string]SiteConfig{
+			"site": {
+				Components: map[string]SiteComponentConfig{
+					"component": {
+						Component: component,
+					},
+				},
+			},
+		},
+		componentConfigs: map[string]ComponentConfig{
+			"component": *component,
+		},
+	}
+	_, err := p.RenderTerraformComponent("site", "component")
+	assert.Error(t, err)
 }

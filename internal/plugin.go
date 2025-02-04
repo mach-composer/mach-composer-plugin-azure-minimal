@@ -271,6 +271,10 @@ func (p *Plugin) getComponentConfig(name string) *ComponentConfig {
 }
 
 func terraformRenderComponentVars(cfg *SiteConfig, _ *SiteComponentConfig) (string, error) {
+	if cfg.ResourceGroup == "" || cfg.ResourcePrefix == "" {
+		return "", fmt.Errorf("missing required component configuration")
+	}
+
 	templateContext := struct {
 		Config *SiteConfig
 	}{
