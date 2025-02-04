@@ -94,12 +94,6 @@ func (p *Plugin) SetGlobalConfig(data map[string]any) error {
 }
 
 func (p *Plugin) SetSiteConfig(site string, data map[string]any) error {
-	// If data is empty then exit early since we only want to take action when
-	// there is data.
-	if data == nil {
-		return nil
-	}
-
 	if p.globalConfig == nil {
 		return fmt.Errorf("a global azure config is required for setting per-site configuration")
 	}
@@ -277,6 +271,10 @@ func (p *Plugin) getComponentConfig(name string) *ComponentConfig {
 }
 
 func terraformRenderComponentVars(cfg *SiteConfig, _ *SiteComponentConfig) (string, error) {
+	if cfg.ResourceGroup == "" || cfg.ResourcePrefix == "" {
+		return "", fmt.Errorf("missing required component configuration")
+	}
+
 	templateContext := struct {
 		Config *SiteConfig
 	}{
