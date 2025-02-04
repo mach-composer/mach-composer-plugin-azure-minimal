@@ -22,11 +22,11 @@ func (a AzureTFState) Key(site string) string {
 type GlobalConfig struct {
 	TenantID       string            `mapstructure:"tenant_id"`
 	SubscriptionID string            `mapstructure:"subscription_id"`
+	ResourceGroup  string            `mapstructure:"resource_group"`
 	ResourcePrefix string            `mapstructure:"resource_prefix"`
 	ResourceTags   map[string]string `mapstructure:"resource_tags"`
 }
 
-// SiteAzureSettings Site-specific Azure settings
 type SiteConfig struct {
 	ResourceGroup  string `mapstructure:"resource_group"`
 	ResourcePrefix string `mapstructure:"resource_prefix"`
@@ -35,12 +35,15 @@ type SiteConfig struct {
 	Components map[string]SiteComponentConfig
 }
 
-func (a *SiteConfig) merge(c *GlobalConfig) {
-	if a.ResourcePrefix == "" {
-		a.ResourcePrefix = c.ResourcePrefix
+func (s *SiteConfig) merge(g *GlobalConfig) {
+	if s.ResourcePrefix == "" {
+		s.ResourcePrefix = g.ResourcePrefix
 	}
-	if a.SubscriptionID == "" {
-		a.SubscriptionID = c.SubscriptionID
+	if s.SubscriptionID == "" {
+		s.SubscriptionID = g.SubscriptionID
+	}
+	if s.ResourceGroup == "" {
+		s.ResourceGroup = g.ResourceGroup
 	}
 }
 

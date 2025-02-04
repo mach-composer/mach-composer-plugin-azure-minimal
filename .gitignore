@@ -1,2 +1,3 @@
 dist/
 mach-composer-plugin-*
+coverage.out
