@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/flosch/pongo2/v5"
-	"github.com/mach-composer/mach-composer-plugin-helpers/helpers"
+	"github.com/mach-composer/mach-composer-plugin-sdk/v2/helpers"
 )
 
 func init() {

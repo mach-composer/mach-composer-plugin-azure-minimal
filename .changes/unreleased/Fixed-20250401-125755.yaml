@@ -1,0 +1,3 @@
+kind: Fixed
+body: Removed deprecated skip_provider_registration
+time: 2025-04-01T12:57:55.666347891+02:00
