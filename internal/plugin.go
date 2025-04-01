@@ -2,17 +2,16 @@ package internal
 
 import (
 	"fmt"
-	"github.com/creasty/defaults"
 	"github.com/hashicorp/go-hclog"
-	"github.com/mach-composer/mach-composer-plugin-helpers/helpers"
-	"github.com/mach-composer/mach-composer-plugin-sdk/plugin"
-	"github.com/mach-composer/mach-composer-plugin-sdk/schema"
+	"github.com/mach-composer/mach-composer-plugin-sdk/v2/helpers"
+	"github.com/mach-composer/mach-composer-plugin-sdk/v2/plugin"
+	"github.com/mach-composer/mach-composer-plugin-sdk/v2/schema"
 	"github.com/mitchellh/mapstructure"
 )
 
 func NewAzurePlugin() schema.MachComposerPlugin {
 	state := &Plugin{
-		provider:         "3.42.0",
+		provider:         ">= 4.0.0",
 		siteConfigs:      map[string]SiteConfig{},
 		componentConfigs: map[string]ComponentConfig{},
 	}
@@ -21,30 +20,26 @@ func NewAzurePlugin() schema.MachComposerPlugin {
 		Identifier: "azure",
 
 		Configure: state.Configure,
-		IsEnabled: state.IsEnabled,
 
 		// Schema
 		GetValidationSchema: state.GetValidationSchema,
 
 		// Config
-		SetRemoteStateBackend:  state.SetRemoteStateBackend,
 		SetGlobalConfig:        state.SetGlobalConfig,
 		SetSiteConfig:          state.SetSiteConfig,
 		SetComponentConfig:     state.SetComponentConfig,
 		SetSiteComponentConfig: state.SetSiteComponentConfig,
 
 		// Renders
-		RenderTerraformStateBackend: state.TerraformRenderStateBackend,
-		RenderTerraformProviders:    state.TerraformRenderProviders,
-		RenderTerraformResources:    state.TerraformRenderResources,
-		RenderTerraformComponent:    state.RenderTerraformComponent,
+		RenderTerraformProviders: state.TerraformRenderProviders,
+		RenderTerraformResources: state.TerraformRenderResources,
+		RenderTerraformComponent: state.RenderTerraformComponent,
 	})
 }
 
 type Plugin struct {
 	environment      string
 	provider         string
-	remoteState      *AzureTFState
 	globalConfig     *GlobalConfig
 	siteConfigs      map[string]SiteConfig
 	componentConfigs map[string]ComponentConfig
@@ -55,22 +50,6 @@ func (p *Plugin) Configure(environment string, provider string) error {
 	if provider != "" {
 		p.provider = provider
 	}
-	return nil
-}
-
-func (p *Plugin) IsEnabled() bool {
-	return len(p.siteConfigs) > 0
-}
-
-func (p *Plugin) SetRemoteStateBackend(data map[string]any) error {
-	state := &AzureTFState{}
-	if err := mapstructure.Decode(data, state); err != nil {
-		return err
-	}
-	if err := defaults.Set(state); err != nil {
-		return err
-	}
-	p.remoteState = state
 	return nil
 }
 
@@ -85,9 +64,7 @@ func (p *Plugin) SetGlobalConfig(data map[string]any) error {
 	}
 
 	if p.globalConfig.ResourceTags != nil {
-		hclog.Default().Warn(
-			fmt.Sprintf("Using resource tags is deprecated. These should be inferred from the site configuration. The field will be removed in a future release."),
-		)
+		hclog.Default().Warn("Using resource tags is deprecated. These should be inferred from the site configuration. The field will be removed in a future release.")
 	}
 
 	return nil
@@ -128,7 +105,7 @@ func (p *Plugin) SetSiteComponentConfig(site, component string, data map[string]
 	return nil
 }
 
-func (p *Plugin) SetComponentConfig(component string, data map[string]any) error {
+func (p *Plugin) SetComponentConfig(component string, _ string, data map[string]any) error {
 	cfg, ok := p.componentConfigs[component]
 	if !ok {
 		cfg = ComponentConfig{}
@@ -139,32 +116,6 @@ func (p *Plugin) SetComponentConfig(component string, data map[string]any) error
 	cfg.Name = component
 	p.componentConfigs[component] = cfg
 	return nil
-}
-
-func (p *Plugin) TerraformRenderStateBackend(site string) (string, error) {
-	if p.remoteState == nil {
-		return "", nil
-	}
-
-	templateContext := struct {
-		State *AzureTFState
-		Site  string
-		Key   string
-	}{
-		State: p.remoteState,
-		Site:  site,
-		Key:   p.remoteState.Key(site),
-	}
-
-	template := `
-	backend "azurerm" {
-	  resource_group_name  = "{{ .State.ResourceGroup }}"
-	  storage_account_name = "{{ .State.StorageAccount }}"
-	  container_name       = "{{ .State.ContainerName }}"
-	  key                  = "{{ .Key }}"
-	}
-	`
-	return helpers.RenderGoTemplate(template, templateContext)
 }
 
 func (p *Plugin) TerraformRenderProviders(site string) (string, error) {
@@ -196,28 +147,46 @@ func (p *Plugin) TerraformRenderResources(site string) (string, error) {
 		}
 	}
 
+	var features = cfg.Features
+
+	// Default features
+	if features == nil {
+		features = map[string]map[string]interface{}{
+			"resource_group": {
+				"prevent_deletion_if_contains_resources": true,
+			},
+			"key_vault": {
+				"purge_soft_deleted_keys_on_destroy": true,
+				"recover_soft_deleted_keys":          true,
+			},
+		}
+	}
+
 	templateContext := struct {
 		SubscriptionID string
 		Tags           map[string]string
+		Features       interface{}
 	}{
 		SubscriptionID: cfg.SubscriptionID,
 		Tags:           tags,
+		Features:       features,
 	}
 
 	template := `
 		provider "azurerm" {
-			subscription_id            = "{{ .SubscriptionID }}"
-			skip_provider_registration = true
-
+			subscription_id = "{{ .SubscriptionID }}"
+			
+			{{- if .Features }}
 			features {
-				resource_group {
-					prevent_deletion_if_contains_resources = true
+				{{- range $key, $value := .Features }}
+				{{ $key }} {
+					{{- range $subKey, $subValue := $value }}
+					{{ renderProperty $subKey $subValue }}
+					{{- end }}
 				}
-				key_vault {
-					purge_soft_deleted_keys_on_destroy = true
-					recover_soft_deleted_keys          = true
-				}
+				{{- end }}
 			}
+			{{- end }}
 		}
 
 		locals {

@@ -11,6 +11,10 @@
         },
         "resource_prefix": {
             "type": "string"
+        },
+        "features": {
+            "type": "object",
+            "additionalProperties": true
         }
     }
 }

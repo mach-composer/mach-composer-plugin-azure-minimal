@@ -21,6 +21,10 @@
         "resource_tags": {
             "deprecationMessage": "Tags now set automatically. This field will be ignored",
             "type": "object"
+        },
+        "features": {
+            "type": "object",
+            "additionalProperties": true
         }
     }
 }

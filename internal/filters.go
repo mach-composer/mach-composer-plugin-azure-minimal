@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/flosch/pongo2/v5"
-	"github.com/mach-composer/mach-composer-plugin-helpers/helpers"
+	"github.com/mach-composer/mach-composer-plugin-sdk/v2/helpers"
 )
 
 func init() {
@@ -34,10 +34,10 @@ func filterShortPrefix(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *p
 	}
 
 	val := in.String()
-	val = strings.Replace(val, "dev", "d", -1)
-	val = strings.Replace(val, "tst", "t", -1)
-	val = strings.Replace(val, "acc", "a", -1)
-	val = strings.Replace(val, "prd", "p", -1)
+	val = strings.ReplaceAll(val, "dev", "d")
+	val = strings.ReplaceAll(val, "tst", "t")
+	val = strings.ReplaceAll(val, "acc", "a")
+	val = strings.ReplaceAll(val, "prd", "p")
 	return pongo2.AsValue(val), nil
 }
 
@@ -55,6 +55,6 @@ func filterRemove(in *pongo2.Value, param *pongo2.Value) (*pongo2.Value, *pongo2
 		}
 	}
 
-	output := strings.Replace(in.String(), param.String(), "", -1)
+	output := strings.ReplaceAll(in.String(), param.String(), "")
 	return pongo2.AsValue(output), nil
 }
