@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/flosch/pongo2/v5 v5.0.0
 	github.com/hashicorp/go-hclog v1.6.3
-	github.com/mach-composer/mach-composer-plugin-sdk/v2 v2.1.0
+	github.com/mach-composer/mach-composer-plugin-sdk/v2 v2.1.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.10.0
 )
